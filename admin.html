@@ -936,6 +936,7 @@
                             <table>
                                 <thead>
                                     <tr>
+                                        <th>Image</th>
                                         <th>Product Name</th>
                                         <th>Category</th>
                                         <th>Price</th>
@@ -1113,6 +1114,16 @@
                         <label>Description</label>
                         <textarea id="productDescription"></textarea>
                     </div>
+                    <div class="form-group">
+                        <label>Product Image</label>
+                        <div style="padding: 1.5rem; border: 2px dashed var(--border); border-radius: 8px; text-align: center; cursor: pointer;" onclick="document.getElementById('productImageModal').click()">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🖼️</div>
+                            <div id="imagePreviewText" style="font-weight: 600; color: var(--text);">Click to upload image</div>
+                            <div style="font-size: 0.85rem; color: var(--text-light);">PNG, JPG up to 5MB</div>
+                            <img id="imagePreview" style="display: none; max-width: 100%; max-height: 200px; margin-top: 1rem; border-radius: 4px;">
+                        </div>
+                    </div>
+                    <input type="file" id="productImageModal" style="display: none;" accept="image/*" onchange="previewProductImage(event)">
                 </form>
             </div>
             <div class="modal-footer">
@@ -1285,11 +1296,12 @@
         function renderProducts() {
             const tbody = document.getElementById('productsList');
             if (allProducts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No products found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No products found</td></tr>';
                 return;
             }
             tbody.innerHTML = allProducts.map(p => `
                 <tr>
+                    <td>${p.image ? `<img src="${p.image}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;" alt="${p.name}">` : '-'}</td>
                     <td>${p.name}</td>
                     <td>${p.category || '-'}</td>
                     <td>$${p.price.toFixed(2)}</td>
@@ -1313,6 +1325,9 @@
 
         function closeProductModal() {
             document.getElementById('productModal').classList.remove('active');
+            document.getElementById('productImageModal').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('imagePreviewText').textContent = 'Click to upload image';
             currentEditingProductId = null;
         }
 
@@ -1325,13 +1340,70 @@
                 document.getElementById('productCategory').value = product.category;
                 document.getElementById('productStock').value = product.stock;
                 document.getElementById('productDescription').value = product.description;
+                
+                // Show existing image if available
+                if (product.image) {
+                    document.getElementById('imagePreview').src = product.image;
+                    document.getElementById('imagePreview').style.display = 'block';
+                    document.getElementById('imagePreviewText').textContent = 'Change image';
+                } else {
+                    document.getElementById('imagePreview').style.display = 'none';
+                    document.getElementById('imagePreviewText').textContent = 'Click to upload image';
+                }
+                
                 document.getElementById('productModalTitle').textContent = 'Edit Product';
                 document.getElementById('productModal').classList.add('active');
+            }
+        }
+        
+        function previewProductImage(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('imagePreview').src = event.target.result;
+                    document.getElementById('imagePreview').style.display = 'block';
+                    document.getElementById('imagePreviewText').textContent = 'Image ready to upload';
+                };
+                reader.readAsDataURL(file);
             }
         }
 
         async function saveProduct(e) {
             e.preventDefault();
+            
+            // Upload image if provided
+            let imageUrl = null;
+            const imageFile = document.getElementById('productImageModal').files[0];
+            
+            if (imageFile) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', imageFile);
+                    
+                    const uploadResponse = await fetch(`${API_BASE}/api/media/product-image`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${currentToken}`
+                        },
+                        body: formData
+                    });
+                    
+                    if (!uploadResponse.ok) {
+                        const error = await uploadResponse.json();
+                        showToast('Image upload failed: ' + (error.error || 'Unknown error'), 'error');
+                        return;
+                    }
+                    
+                    const uploadData = await uploadResponse.json();
+                    imageUrl = uploadData.url;
+                } catch (error) {
+                    console.error('[v0] Image upload error:', error);
+                    showToast('Error uploading image: ' + error.message, 'error');
+                    return;
+                }
+            }
+            
             const data = {
                 name: document.getElementById('productName').value,
                 price: parseFloat(document.getElementById('productPrice').value),
@@ -1339,6 +1411,10 @@
                 stock: parseInt(document.getElementById('productStock').value),
                 description: document.getElementById('productDescription').value
             };
+            
+            if (imageUrl) {
+                data.image = imageUrl;
+            }
 
             try {
                 let url = `${API_BASE}/api/products`;
