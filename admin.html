@@ -869,6 +869,7 @@
                 <div class="nav-link active" onclick="showPage('dashboard')">Dashboard</div>
                 <div class="nav-link" onclick="showPage('products')">Products</div>
                 <div class="nav-link" onclick="showPage('orders')">Orders</div>
+                <div class="nav-link" onclick="showPage('categories')">Categories</div>
                 <div class="nav-link" onclick="showPage('media')">Media</div>
                 <div class="nav-link" onclick="showPage('settings')">Settings</div>
             </div>
@@ -987,6 +988,36 @@
                     </div>
                 </div>
 
+                <!-- CATEGORIES PAGE -->
+                <div id="categories" class="page">
+                    <h2 class="page-title">Categories</h2>
+                    <div class="page-section">
+                        <div class="section-header">
+                            <div class="section-title">Product Categories</div>
+                            <button class="btn-primary" onclick="openCategoryModal()">Add Category</button>
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" id="categorySearch" placeholder="Search categories..." onkeyup="filterCategories()">
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Icon</th>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="categoriesList">
+                                    <tr><td colspan="5" class="empty-state">No categories found</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- MEDIA PAGE -->
                 <div id="media" class="page">
                     <h2 class="page-title">Media</h2>
@@ -996,19 +1027,30 @@
                         </div>
                         <p style="color: var(--text-light); margin-bottom: 1.5rem;">Upload and manage your store logo and promotional banners.</p>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-                            <div style="padding: 2rem; border: 2px dashed var(--border); border-radius: 8px; text-align: center; cursor: pointer;">
+                            <div style="padding: 2rem; border: 2px dashed var(--border); border-radius: 8px; text-align: center; cursor: pointer;" onclick="document.getElementById('logoInput').click()">
                                 <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏪</div>
                                 <div style="font-weight: 600; color: var(--text);">Upload Logo</div>
                                 <div style="font-size: 0.85rem; color: var(--text-light);">PNG, JPG up to 2MB</div>
                             </div>
-                            <div style="padding: 2rem; border: 2px dashed var(--border); border-radius: 8px; text-align: center; cursor: pointer;">
+                            <div style="padding: 2rem; border: 2px dashed var(--border); border-radius: 8px; text-align: center; cursor: pointer;" onclick="document.getElementById('bannerInput').click()">
                                 <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎨</div>
                                 <div style="font-weight: 600; color: var(--text);">Upload Banner</div>
                                 <div style="font-size: 0.85rem; color: var(--text-light);">PNG, JPG up to 5MB</div>
                             </div>
+                            <div style="padding: 2rem; border: 2px dashed var(--border); border-radius: 8px; text-align: center; cursor: pointer;" onclick="document.getElementById('productImageInput').click()">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🖼️</div>
+                                <div style="font-weight: 600; color: var(--text);">Upload Product Image</div>
+                                <div style="font-size: 0.85rem; color: var(--text-light);">PNG, JPG up to 5MB</div>
+                            </div>
                         </div>
+                        <div id="uploadedBanners" style="margin-top: 3rem;"></div>
                     </div>
                 </div>
+                
+                <!-- Hidden File Inputs -->
+                <input type="file" id="logoInput" style="display: none;" accept="image/*" onchange="uploadFile(event, 'logo')">
+                <input type="file" id="bannerInput" style="display: none;" accept="image/*" onchange="uploadFile(event, 'banner')">
+                <input type="file" id="productImageInput" style="display: none;" accept="image/*" onchange="uploadFile(event, 'product')">
 
                 <!-- SETTINGS PAGE -->
                 <div id="settings" class="page">
@@ -1055,11 +1097,8 @@
                     </div>
                     <div class="form-group">
                         <label>Category</label>
-                        <select id="productCategory">
+                        <select id="productCategory" onchange="populateCategories()">
                             <option value="">Select Category</option>
-                            <option value="electronics">Electronics</option>
-                            <option value="clothing">Clothing</option>
-                            <option value="food">Food</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -1083,12 +1122,44 @@
         </div>
     </div>
 
+    <!-- CATEGORY MODAL -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="categoryModalTitle">Add Category</div>
+                <button class="modal-close" onclick="closeCategoryModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm" onsubmit="saveCategory(event)">
+                    <div class="form-group">
+                        <label>Category Name</label>
+                        <input type="text" id="categoryName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Icon (emoji or text)</label>
+                        <input type="text" id="categoryIcon" placeholder="e.g., 📱, 👕, 🍕" value="📦" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="categoryDescription" placeholder="Category description"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeCategoryModal()">Cancel</button>
+                <button type="submit" form="categoryForm" class="btn-primary">Save Category</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_BASE = 'https://zupermart-api.amworkmanage.workers.dev';
         let currentToken = null;
         let allProducts = [];
         let allOrders = [];
+        let allCategories = [];
         let currentEditingProductId = null;
+        let currentEditingCategoryId = null;
 
         // LOGIN
         async function handleLogin(e) {
@@ -1150,13 +1221,16 @@
                 dashboard: 'Dashboard',
                 products: 'Products',
                 orders: 'Orders',
+                categories: 'Categories',
                 media: 'Media',
                 settings: 'Settings'
             };
             document.getElementById('pageTitle').textContent = titles[pageName];
 
-            if (pageName === 'products') loadProducts();
+            if (pageName === 'products') { loadProducts(); populateCategories(); }
             if (pageName === 'orders') loadOrders();
+            if (pageName === 'categories') loadCategories();
+            if (pageName === 'media') loadBanners();
         }
 
         // DASHBOARD
@@ -1383,6 +1457,259 @@
             const search = document.getElementById('orderSearch').value.toLowerCase();
             const status = document.getElementById('statusFilter').value;
             renderOrders();
+        }
+
+        // CATEGORIES
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/api/categories`);
+                if (!response.ok) {
+                    console.error('[v0] Failed to load categories');
+                    allCategories = [];
+                } else {
+                    allCategories = await response.json();
+                }
+                renderCategories();
+            } catch (error) {
+                console.error('[v0] Categories error:', error);
+                allCategories = [];
+                renderCategories();
+            }
+        }
+
+        function renderCategories() {
+            const tbody = document.getElementById('categoriesList');
+            if (allCategories.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No categories found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = allCategories.map(c => {
+                const date = new Date(c.createdAt).toLocaleDateString();
+                return `
+                    <tr>
+                        <td style="font-size: 1.5rem;">${c.icon}</td>
+                        <td>${c.name}</td>
+                        <td>${c.description || '-'}</td>
+                        <td>${date}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-sm btn-edit" onclick="editCategory(${c.id})">Edit</button>
+                                <button class="btn-sm btn-delete" onclick="deleteCategory(${c.id})">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openCategoryModal() {
+            currentEditingCategoryId = null;
+            document.getElementById('categoryForm').reset();
+            document.getElementById('categoryIcon').value = '📦';
+            document.getElementById('categoryModalTitle').textContent = 'Add Category';
+            document.getElementById('categoryModal').classList.add('active');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.remove('active');
+            currentEditingCategoryId = null;
+        }
+
+        function editCategory(id) {
+            const category = allCategories.find(c => c.id === id);
+            if (category) {
+                currentEditingCategoryId = id;
+                document.getElementById('categoryName').value = category.name;
+                document.getElementById('categoryIcon').value = category.icon;
+                document.getElementById('categoryDescription').value = category.description;
+                document.getElementById('categoryModalTitle').textContent = 'Edit Category';
+                document.getElementById('categoryModal').classList.add('active');
+            }
+        }
+
+        async function saveCategory(e) {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('categoryName').value,
+                icon: document.getElementById('categoryIcon').value,
+                description: document.getElementById('categoryDescription').value
+            };
+
+            try {
+                let url = `${API_BASE}/api/categories`;
+                let method = 'POST';
+
+                if (currentEditingCategoryId) {
+                    url = `${API_BASE}/api/categories/${currentEditingCategoryId}`;
+                    method = 'PUT';
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showToast(error.error || 'Failed to save category', 'error');
+                    return;
+                }
+
+                showToast(currentEditingCategoryId ? 'Category updated successfully' : 'Category added successfully', 'success');
+                closeCategoryModal();
+                loadCategories();
+            } catch (error) {
+                console.error('[v0] Save category error:', error);
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteCategory(id) {
+            if (confirm('Are you sure you want to delete this category?')) {
+                try {
+                    const response = await fetch(`${API_BASE}/api/categories/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${currentToken}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        showToast(error.error || 'Failed to delete category', 'error');
+                        return;
+                    }
+
+                    showToast('Category deleted successfully', 'success');
+                    loadCategories();
+                } catch (error) {
+                    console.error('[v0] Delete category error:', error);
+                    showToast('Error: ' + error.message, 'error');
+                }
+            }
+        }
+
+        function filterCategories() {
+            const search = document.getElementById('categorySearch').value.toLowerCase();
+            const filtered = allCategories.filter(c => 
+                c.name.toLowerCase().includes(search)
+            );
+            allCategories = filtered.length > 0 ? filtered : allCategories;
+            renderCategories();
+        }
+
+        function populateCategories() {
+            const select = document.getElementById('productCategory');
+            select.innerHTML = '<option value="">Select Category</option>';
+            allCategories.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.name;
+                option.textContent = `${c.icon} ${c.name}`;
+                select.appendChild(option);
+            });
+        }
+
+        // MEDIA UPLOAD
+        async function uploadFile(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                let endpoint = '';
+                if (type === 'logo') endpoint = '/api/media/logo';
+                else if (type === 'banner') endpoint = '/api/media/banner';
+                else if (type === 'product') endpoint = '/api/media/product-image';
+
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showToast(error.error || 'Upload failed', 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} uploaded successfully`, 'success');
+                
+                // Reset file input
+                e.target.value = '';
+                
+                if (type === 'banner') loadBanners();
+            } catch (error) {
+                console.error('[v0] Upload error:', error);
+                showToast('Upload error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadBanners() {
+            try {
+                const response = await fetch(`${API_BASE}/api/media/banners`);
+                if (response.ok) {
+                    const banners = await response.json();
+                    renderBanners(banners);
+                }
+            } catch (error) {
+                console.error('[v0] Load banners error:', error);
+            }
+        }
+
+        function renderBanners(banners) {
+            const container = document.getElementById('uploadedBanners');
+            if (banners.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="margin-top: 2rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--navy); margin-bottom: 1rem;">Uploaded Banners</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+                        ${banners.map(b => `
+                            <div style="position: relative; padding: 1rem; background: var(--light-gray); border-radius: 8px;">
+                                <div style="font-size: 0.85rem; color: var(--text); word-break: break-all; margin-bottom: 0.5rem;">${b.name}</div>
+                                <button class="btn-sm btn-delete" style="width: 100%;" onclick="deleteBanner('${b.key}')">Delete</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function deleteBanner(path) {
+            if (confirm('Delete this banner?')) {
+                try {
+                    const response = await fetch(`${API_BASE}/api/media/${encodeURIComponent(path)}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${currentToken}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        showToast('Failed to delete banner', 'error');
+                        return;
+                    }
+
+                    showToast('Banner deleted', 'success');
+                    loadBanners();
+                } catch (error) {
+                    console.error('[v0] Delete banner error:', error);
+                    showToast('Error: ' + error.message, 'error');
+                }
+            }
         }
 
         // LOGOUT
