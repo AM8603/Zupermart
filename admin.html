@@ -1091,26 +1091,43 @@
         let currentEditingProductId = null;
 
         // LOGIN
-        function handleLogin(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const remember = document.getElementById('rememberMe').checked;
 
-            if (username === 'admin' && password === 'admin') {
-                localStorage.setItem('adminUser', username);
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showLoginError(data.error || 'Login failed');
+                    return;
+                }
+
+                // Login successful
+                localStorage.setItem('adminUser', data.username);
+                localStorage.setItem('adminToken', data.token);
                 if (remember) localStorage.setItem('rememberAdmin', 'true');
                 
-                currentToken = 'mock-token-' + Date.now();
-                localStorage.setItem('adminToken', currentToken);
+                currentToken = data.token;
                 
                 document.getElementById('loginPage').classList.add('hidden');
                 document.getElementById('appPage').classList.add('active');
-                document.getElementById('currentUser').textContent = username;
+                document.getElementById('currentUser').textContent = data.username;
                 
                 loadDashboardStats();
-            } else {
-                showLoginError('Invalid username or password');
+            } catch (error) {
+                console.error('[v0] Login error:', error);
+                showLoginError('Connection error: ' + error.message);
             }
         }
 
@@ -1143,22 +1160,52 @@
         }
 
         // DASHBOARD
-        function loadDashboardStats() {
-            document.getElementById('totalOrders').textContent = '12';
-            document.getElementById('totalProducts').textContent = '45';
-            document.getElementById('totalRevenue').textContent = '1,250.50';
-            document.getElementById('pendingOrders').textContent = '3';
-            showToast('Stats refreshed', 'success');
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/dashboard/stats`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('[v0] Failed to load stats');
+                    return;
+                }
+
+                const data = await response.json();
+                document.getElementById('totalOrders').textContent = data.totalOrders || '0';
+                document.getElementById('totalProducts').textContent = data.totalProducts || '0';
+                document.getElementById('totalRevenue').textContent = '$' + (data.totalRevenue || 0).toFixed(2);
+                document.getElementById('pendingOrders').textContent = data.pendingOrders || '0';
+                showToast('Stats refreshed', 'success');
+            } catch (error) {
+                console.error('[v0] Stats error:', error);
+                showToast('Failed to load stats', 'error');
+            }
         }
 
         // PRODUCTS
-        function loadProducts() {
-            allProducts = [
-                {id: 1, name: 'Laptop', category: 'electronics', price: 999.99, stock: 15, description: 'High-performance laptop'},
-                {id: 2, name: 'T-Shirt', category: 'clothing', price: 29.99, stock: 50, description: 'Cotton t-shirt'},
-                {id: 3, name: 'Coffee', category: 'food', price: 12.99, stock: 100, description: 'Premium coffee beans'}
-            ];
-            renderProducts();
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_BASE}/api/products`, {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    console.error('[v0] Failed to load products');
+                    allProducts = [];
+                } else {
+                    const data = await response.json();
+                    allProducts = data.results || data || [];
+                }
+                renderProducts();
+            } catch (error) {
+                console.error('[v0] Products error:', error);
+                allProducts = [];
+                renderProducts();
+            }
         }
 
         function renderProducts() {
@@ -1209,7 +1256,7 @@
             }
         }
 
-        function saveProduct(e) {
+        async function saveProduct(e) {
             e.preventDefault();
             const data = {
                 name: document.getElementById('productName').value,
@@ -1219,26 +1266,61 @@
                 description: document.getElementById('productDescription').value
             };
 
-            if (currentEditingProductId) {
-                const idx = allProducts.findIndex(p => p.id === currentEditingProductId);
-                if (idx >= 0) {
-                    allProducts[idx] = {...allProducts[idx], ...data};
-                    showToast('Product updated successfully', 'success');
-                }
-            } else {
-                allProducts.push({id: Date.now(), ...data});
-                showToast('Product added successfully', 'success');
-            }
+            try {
+                let url = `${API_BASE}/api/products`;
+                let method = 'POST';
 
-            closeProductModal();
-            renderProducts();
+                if (currentEditingProductId) {
+                    url = `${API_BASE}/api/products/${currentEditingProductId}`;
+                    method = 'PUT';
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showToast(error.error || 'Failed to save product', 'error');
+                    return;
+                }
+
+                showToast(currentEditingProductId ? 'Product updated successfully' : 'Product added successfully', 'success');
+                closeProductModal();
+                loadProducts();
+            } catch (error) {
+                console.error('[v0] Save product error:', error);
+                showToast('Error: ' + error.message, 'error');
+            }
         }
 
-        function deleteProduct(id) {
+        async function deleteProduct(id) {
             if (confirm('Are you sure you want to delete this product?')) {
-                allProducts = allProducts.filter(p => p.id !== id);
-                renderProducts();
-                showToast('Product deleted', 'success');
+                try {
+                    const response = await fetch(`${API_BASE}/api/products/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${currentToken}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        showToast(error.error || 'Failed to delete product', 'error');
+                        return;
+                    }
+
+                    showToast('Product deleted successfully', 'success');
+                    loadProducts();
+                } catch (error) {
+                    console.error('[v0] Delete product error:', error);
+                    showToast('Error: ' + error.message, 'error');
+                }
             }
         }
 
@@ -1252,13 +1334,28 @@
         }
 
         // ORDERS
-        function loadOrders() {
-            allOrders = [
-                {id: '#1001', customer: 'John Doe', amount: 250.50, status: 'Delivered', date: '2024-01-15'},
-                {id: '#1002', customer: 'Jane Smith', amount: 120.00, status: 'Shipped', date: '2024-01-14'},
-                {id: '#1003', customer: 'Bob Wilson', amount: 89.99, status: 'Pending', date: '2024-01-13'}
-            ];
-            renderOrders();
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_BASE}/api/orders`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('[v0] Failed to load orders');
+                    allOrders = [];
+                } else {
+                    const data = await response.json();
+                    allOrders = data.results || data || [];
+                }
+                renderOrders();
+            } catch (error) {
+                console.error('[v0] Orders error:', error);
+                allOrders = [];
+                renderOrders();
+            }
         }
 
         function renderOrders() {
@@ -1267,16 +1364,19 @@
                 tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No orders found</td></tr>';
                 return;
             }
-            tbody.innerHTML = allOrders.map(o => `
-                <tr>
-                    <td>${o.id}</td>
-                    <td>${o.customer}</td>
-                    <td>$${o.amount.toFixed(2)}</td>
-                    <td><span class="status-badge status-${o.status.toLowerCase()}">${o.status}</span></td>
-                    <td>${o.date}</td>
-                    <td><button class="btn-sm btn-view">View</button></td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = allOrders.map(o => {
+                const date = new Date(o.created_at).toLocaleDateString();
+                return `
+                    <tr>
+                        <td>#${o.id}</td>
+                        <td>${o.customer_name || 'N/A'}</td>
+                        <td>$${parseFloat(o.total_amount || 0).toFixed(2)}</td>
+                        <td><span class="status-badge status-${o.status.toLowerCase()}">${o.status}</span></td>
+                        <td>${date}</td>
+                        <td><button class="btn-sm btn-view" onclick="viewOrder(${o.id})">View</button></td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function filterOrders() {
@@ -1294,6 +1394,28 @@
         }
 
         // TOAST
+        async function viewOrder(id) {
+            try {
+                const response = await fetch(`${API_BASE}/api/orders/${id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    showToast('Failed to load order details', 'error');
+                    return;
+                }
+
+                const order = await response.json();
+                alert(`Order #${order.id}\nCustomer: ${order.customer_name}\nStatus: ${order.status}\nTotal: $${order.total_amount}`);
+            } catch (error) {
+                console.error('[v0] View order error:', error);
+                showToast('Error loading order', 'error');
+            }
+        }
+
         function showToast(msg, type = 'success') {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
