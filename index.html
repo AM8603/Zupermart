@@ -994,29 +994,16 @@
 
                     <!-- Payment Info -->
                     <div class="form-section">
-                        <h2>Payment Information</h2>
+                        <h2>Payment Method</h2>
                         <div class="form-row full">
                             <div class="form-group">
-                                <label>Card Holder Name</label>
-                                <input type="text" id="cardName" required>
+                                <label>
+                                    <input type="radio" name="paymentMethod" value="cod" checked>
+                                    Cash on Delivery
+                                </label>
                             </div>
                         </div>
-                        <div class="form-row full">
-                            <div class="form-group">
-                                <label>Card Number</label>
-                                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Expiry Date</label>
-                                <input type="text" id="expiry" placeholder="MM/YY" required>
-                            </div>
-                            <div class="form-group">
-                                <label>CVV</label>
-                                <input type="text" id="cvv" placeholder="123" required>
-                            </div>
-                        </div>
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 0.5rem;">Pay when your order arrives at your doorstep</p>
                     </div>
 
                     <button type="submit" class="place-order-btn">Place Order</button>
@@ -1089,6 +1076,7 @@
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         let currentCarouselIndex = 0;
         let banners = [];
+        let currentProduct = null;
 
         // Initialize
         window.addEventListener('load', () => {
@@ -1274,6 +1262,8 @@
             const product = allProducts.find(p => p.id === id);
             if (!product) return;
 
+            currentProduct = product;
+
             document.getElementById('detailsName').textContent = product.name;
             document.getElementById('detailsCategory').textContent = product.category || 'General';
             document.getElementById('detailsPrice').textContent = `$${product.price.toFixed(2)}`;
@@ -1282,6 +1272,7 @@
             document.getElementById('detailsQuantity').value = 1;
 
             if (product.image) {
+                console.log('[v0] Loading product image:', product.image);
                 document.getElementById('detailsImage').src = product.image;
                 document.getElementById('detailsImage').style.display = 'block';
                 document.getElementById('detailsImagePlaceholder').style.display = 'none';
@@ -1295,9 +1286,23 @@
         }
 
         function addToCartFromDetails() {
-            const product = allProducts.find(p => p.id === parseInt(document.getElementById('detailsName').textContent || ''));
-            // Need to track current product - will fix this
-            const quantity = parseInt(document.getElementById('detailsQuantity').value);
+            if (!currentProduct || currentProduct.stock <= 0) {
+                showToast('Product not available', 'error');
+                return;
+            }
+            
+            const quantity = parseInt(document.getElementById('detailsQuantity').value) || 1;
+            const existingItem = cart.find(item => item.id === currentProduct.id);
+            
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({ ...currentProduct, quantity });
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            showToast(`Added ${quantity} item(s) to cart!`, 'success');
             goToPage('cart');
         }
 
