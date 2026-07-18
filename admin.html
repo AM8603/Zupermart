@@ -1072,6 +1072,28 @@
                             <button type="button" class="btn-primary" style="margin-top: 1rem;">Save Changes</button>
                         </form>
                     </div>
+                    
+                    <div class="page-section">
+                        <div class="section-header">
+                            <div class="section-title">Payment Methods</div>
+                            <button class="btn-primary" onclick="openPaymentMethodModal()">Add Method</button>
+                        </div>
+                        <p style="color: var(--text-light); margin-bottom: 1.5rem;">Configure payment methods available to customers</p>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Payment Method</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentMethodsList">
+                                    <tr><td colspan="3" class="empty-state">Loading payment methods...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1123,6 +1145,38 @@
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeProductModal()">Cancel</button>
                 <button type="submit" form="productForm" class="btn-primary">Save Product</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT METHOD MODAL -->
+    <div id="paymentMethodModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="paymentMethodModalTitle">Add Payment Method</div>
+                <button class="modal-close" onclick="closePaymentMethodModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentMethodForm" onsubmit="savePaymentMethod(event)">
+                    <div class="form-group">
+                        <label>Payment Method Name</label>
+                        <input type="text" id="paymentMethodName" required placeholder="e.g., Bank Transfer, Credit Card">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="paymentMethodDescription" placeholder="e.g., Pay via bank transfer. We accept all major banks."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="paymentMethodActive" checked>
+                            Active / Enabled
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closePaymentMethodModal()">Cancel</button>
+                <button type="submit" form="paymentMethodForm" class="btn-primary">Save Method</button>
             </div>
         </div>
     </div>
@@ -1236,6 +1290,7 @@
             if (pageName === 'orders') loadOrders();
             if (pageName === 'categories') loadCategories();
             if (pageName === 'media') loadBanners();
+            if (pageName === 'settings') loadPaymentMethods();
         }
 
         // DASHBOARD
@@ -1779,6 +1834,103 @@
                     console.error('[v0] Delete banner error:', error);
                     showToast('Error: ' + error.message, 'error');
                 }
+            }
+        }
+
+        // PAYMENT METHODS
+        let allPaymentMethods = [];
+
+        async function loadPaymentMethods() {
+            try {
+                let methods = JSON.parse(localStorage.getItem('paymentMethods')) || [];
+                if (methods.length === 0) {
+                    methods = [{ id: 1, name: 'Cash on Delivery', description: 'Pay when order arrives', active: true }];
+                    localStorage.setItem('paymentMethods', JSON.stringify(methods));
+                }
+                allPaymentMethods = methods;
+                renderPaymentMethods();
+            } catch (error) {
+                console.error('[v0] Load payment methods error:', error);
+            }
+        }
+
+        function renderPaymentMethods() {
+            const tbody = document.getElementById('paymentMethodsList');
+            if (allPaymentMethods.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No payment methods</td></tr>';
+                return;
+            }
+            tbody.innerHTML = allPaymentMethods.map(m => `
+                <tr>
+                    <td>${m.name}</td>
+                    <td>${m.active ? '<span style="color: var(--success); font-weight: 600;">Enabled</span>' : '<span style="color: var(--text-light);">Disabled</span>'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-sm btn-edit" onclick="editPaymentMethod(${m.id})">Edit</button>
+                            <button class="btn-sm btn-delete" onclick="deletePaymentMethod(${m.id})">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openPaymentMethodModal() {
+            document.getElementById('paymentMethodForm').reset();
+            document.getElementById('paymentMethodModalTitle').textContent = 'Add Payment Method';
+            document.getElementById('paymentMethodModal').classList.add('active');
+        }
+
+        function closePaymentMethodModal() {
+            document.getElementById('paymentMethodModal').classList.remove('active');
+        }
+
+        function editPaymentMethod(id) {
+            const method = allPaymentMethods.find(m => m.id === id);
+            if (method) {
+                document.getElementById('paymentMethodName').value = method.name;
+                document.getElementById('paymentMethodDescription').value = method.description || '';
+                document.getElementById('paymentMethodActive').checked = method.active;
+                document.getElementById('paymentMethodModalTitle').textContent = 'Edit Payment Method';
+                document.getElementById('paymentMethodModal').classList.add('active');
+                document.getElementById('paymentMethodForm').dataset.editId = id;
+            }
+        }
+
+        function savePaymentMethod(e) {
+            e.preventDefault();
+            const editId = document.getElementById('paymentMethodForm').dataset.editId;
+            
+            const method = {
+                id: editId ? parseInt(editId) : Math.max(...allPaymentMethods.map(m => m.id), 0) + 1,
+                name: document.getElementById('paymentMethodName').value,
+                description: document.getElementById('paymentMethodDescription').value,
+                active: document.getElementById('paymentMethodActive').checked
+            };
+
+            if (editId) {
+                const index = allPaymentMethods.findIndex(m => m.id === parseInt(editId));
+                if (index !== -1) allPaymentMethods[index] = method;
+            } else {
+                allPaymentMethods.push(method);
+            }
+
+            localStorage.setItem('paymentMethods', JSON.stringify(allPaymentMethods));
+            showToast('Payment method saved', 'success');
+            closePaymentMethodModal();
+            renderPaymentMethods();
+            delete document.getElementById('paymentMethodForm').dataset.editId;
+        }
+
+        function deletePaymentMethod(id) {
+            if (id === 1) {
+                showToast('Cannot delete Cash on Delivery method', 'error');
+                return;
+            }
+            if (confirm('Delete this payment method?')) {
+                allPaymentMethods = allPaymentMethods.filter(m => m.id !== id);
+                localStorage.setItem('paymentMethods', JSON.stringify(allPaymentMethods));
+                showToast('Payment method deleted', 'success');
+                renderPaymentMethods();
             }
         }
 
