@@ -174,6 +174,14 @@
             display: block;
         }
 
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
         /* ========== LOGIN PAGE ========== */
         .login-container {
             display: flex;
@@ -579,6 +587,17 @@
             }
         }
 
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
         .toast.success {
             border-left: 4px solid var(--success);
         }
@@ -969,10 +988,12 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
-        const API_BASE = 'https://zupermart-api.amworkmanage.workers.dev'; // Replace with your Cloudflare Worker URL
+        // Replace this with your actual Cloudflare Worker URL
+        const API_BASE = 'https://zupermart-api.amworkmanage.workers.dev'; 
         let currentToken = null;
         let allProducts = [];
         let allOrders = [];
+        let currentEditingProductId = null;
 
         // ==================== AUTHENTICATION ====================
 
@@ -1037,6 +1058,11 @@
             document.getElementById('loginPage').classList.remove('active');
             document.getElementById('appPage').style.display = 'flex';
             document.getElementById('currentUser').textContent = localStorage.getItem('adminUser') || 'Admin';
+            
+            // Set dashboard as active page
+            document.getElementById('dashboard').classList.add('active');
+            document.querySelectorAll('.nav-link')[0].classList.add('active');
+            
             loadDashboardStats();
         }
 
@@ -1059,8 +1085,13 @@
                 page.classList.add('active');
             }
 
-            // Mark nav link as active
-            event.target.classList.add('active');
+            // Mark nav link as active - find the link that matches this page
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.onclick && link.onclick.toString().includes(`'${pageName}'`)) {
+                    link.classList.add('active');
+                }
+            });
 
             // Update page title
             const titles = {
@@ -1145,6 +1176,7 @@
         }
 
         function openProductModal() {
+            currentEditingProductId = null;
             document.getElementById('productForm').reset();
             document.getElementById('productModalTitle').textContent = 'Add Product';
             document.getElementById('productModal').classList.add('active');
@@ -1152,6 +1184,7 @@
 
         function closeProductModal() {
             document.getElementById('productModal').classList.remove('active');
+            currentEditingProductId = null;
         }
 
         async function saveProduct(event) {
@@ -1166,8 +1199,17 @@
             };
 
             try {
-                const response = await fetch(`${API_BASE}/api/products`, {
-                    method: 'POST',
+                let url = `${API_BASE}/api/products`;
+                let method = 'POST';
+                
+                // If editing, use PUT method
+                if (currentEditingProductId) {
+                    url = `${API_BASE}/api/products/${currentEditingProductId}`;
+                    method = 'PUT';
+                }
+
+                const response = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentToken}`
@@ -1177,7 +1219,7 @@
 
                 if (!response.ok) throw new Error('Failed to save product');
 
-                showToast('Product saved successfully', 'success');
+                showToast(currentEditingProductId ? 'Product updated successfully' : 'Product added successfully', 'success');
                 closeProductModal();
                 loadProducts();
             } catch (error) {
@@ -1188,6 +1230,7 @@
         function editProduct(id) {
             const product = allProducts.find(p => p.id === id);
             if (product) {
+                currentEditingProductId = id;
                 document.getElementById('productName').value = product.name;
                 document.getElementById('productPrice').value = product.price;
                 document.getElementById('productCategory').value = product.category || '';
