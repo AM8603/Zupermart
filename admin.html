@@ -1038,11 +1038,6 @@
                                 <div style="font-weight: 600; color: var(--text);">Upload Banner</div>
                                 <div style="font-size: 0.85rem; color: var(--text-light);">PNG, JPG up to 5MB</div>
                             </div>
-                            <div style="padding: 2rem; border: 2px dashed var(--border); border-radius: 8px; text-align: center; cursor: pointer;" onclick="document.getElementById('productImageInput').click()">
-                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🖼️</div>
-                                <div style="font-weight: 600; color: var(--text);">Upload Product Image</div>
-                                <div style="font-size: 0.85rem; color: var(--text-light);">PNG, JPG up to 5MB</div>
-                            </div>
                         </div>
                         <div id="uploadedBanners" style="margin-top: 3rem;"></div>
                     </div>
@@ -1051,7 +1046,6 @@
                 <!-- Hidden File Inputs -->
                 <input type="file" id="logoInput" style="display: none;" accept="image/*" onchange="uploadFile(event, 'logo')">
                 <input type="file" id="bannerInput" style="display: none;" accept="image/*" onchange="uploadFile(event, 'banner')">
-                <input type="file" id="productImageInput" style="display: none;" accept="image/*" onchange="uploadFile(event, 'product')">
 
                 <!-- SETTINGS PAGE -->
                 <div id="settings" class="page">
