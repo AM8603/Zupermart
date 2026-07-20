@@ -875,8 +875,13 @@ async function saveProduct(e) {
       variants: variantsPayload
     };
 
-    let url = `${API_BASE}/api/products`, method = 'POST';
-    if (currentEditingProductId) { url = `${API_BASE}/api/products/${currentEditingProductId}`; method = 'PUT'; }
+  let url = '/api/products';
+let method = 'POST';
+
+if (currentEditingProductId) {
+    url = `/api/products/${currentEditingProductId}`;
+    method = 'PUT';
+}
     const response = await apiFetch(url, {
       method, headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${currentToken}` },
       body: JSON.stringify(payload)
@@ -1140,8 +1145,13 @@ async function saveCategory(e) {
       description: document.getElementById('categoryDescription').value,
       imageUrl
     };
-    let url = `${API_BASE}/api/categories`, method = 'POST';
-    if (currentEditingCategoryId) { url = `${API_BASE}/api/categories/${currentEditingCategoryId}`; method = 'PUT'; }
+   let url = '/api/categories';
+let method = 'POST';
+
+if (currentEditingCategoryId) {
+    url = `/api/categories/${currentEditingCategoryId}`;
+    method = 'PUT';
+}
     const res = await apiFetch(url, { method, headers:{'Content-Type':'application/json','Authorization':`Bearer ${currentToken}`}, body: JSON.stringify(payload) });
     if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.error||'Failed', 'error'); return; }
     showToast(currentEditingCategoryId ? 'Category updated' : 'Category added', 'success');
