@@ -350,7 +350,7 @@
             <div class="form-group"><label>Last name</label><input type="text" id="lastName" required></div>
           </div>
           <div class="form-row full"><div class="form-group"><label>Email</label><input type="email" id="email" required></div></div>
-          <div class="form-row full"><div class="form-group"><label>Phone</label><input type="tel" id="phone" placeholder="Optional"></div></div>
+          <div class="form-row full"><div class="form-group"><label>Phone</label><input type="tel" id="phone" placeholder="Required" required></div></div>
           <div class="form-row full"><div class="form-group"><label>Address</label><input type="text" id="address" required></div></div>
           <div class="form-row">
             <div class="form-group"><label>City</label><input type="text" id="city" required></div>
@@ -384,10 +384,11 @@
 <div id="confirmationPage" class="page">
   <div class="confirm-wrap">
     <div class="confirm-badge">✓</div>
-    <h1 style="font-size:1.9rem; margin-bottom:.5rem;">Order placed!</h1>
-    <p style="color:var(--ink-soft);">Thank you for shopping with Zupermart. A confirmation has been sent to your email.</p>
-    <div class="order-id-tag" id="confirmOrderId">#0000</div>
-    <p style="color:var(--ink-soft); font-size:.9rem; margin-bottom:1.5rem;">Save this order number to track your delivery.</p>
+    <h1 style="font-size:1.9rem; margin-bottom:.5rem;">Thank you for your order!</h1>
+    <p style="color:var(--ink-soft);">Your order has been placed successfully. A confirmation has been sent to your email.</p>
+    <p style="color:var(--ink); font-weight:600; margin-top:1rem;">Your order number is:</p>
+    <div class="order-id-tag" id="confirmOrderId" style="font-size:1.4rem; padding:.7rem 1.4rem;">#0000</div>
+    <p style="color:var(--ink-soft); font-size:.9rem; margin:1rem 0 1.5rem;">Save this order number — you'll need it to track your delivery status.</p>
     <div style="display:flex; gap:.8rem; justify-content:center; flex-wrap:wrap;">
       <button class="place-order-btn" style="width:auto; padding:.9rem 1.6rem;" onclick="goToTrackWithId()">Track this order</button>
       <button class="ghost-btn" style="width:auto; padding:.9rem 1.6rem;" onclick="goToPage('home')">Continue shopping</button>
@@ -631,23 +632,54 @@ function viewProductDetails(id){
   if (p.image) { img.src = p.image; img.style.display='block'; ph.style.display='none'; }
   else { img.style.display='none'; ph.style.display='block'; }
 
-  // variant picker
+  // variant picker — group variants by attribute columns split on '/'
   const variants = Array.isArray(p.variants) ? p.variants : [];
   const picker = document.getElementById('variantPicker');
   if (variants.length > 0) {
     picker.style.display = 'block';
-    picker.innerHTML = `
-      <div class="vp-label">Choose option</div>
-      <div class="variant-options">
-        ${variants.map((v, i) => {
-          const vStock = v.stock == null ? p.stock : v.stock;
+    // Split each variant label into parts, e.g. "Black / S" -> ["Black", "S"]
+    const parsed = variants.map(v => {
+      const label = (v.label || [v.name, v.value].filter(Boolean).join(' / ') || '').trim();
+      const parts = label.split('/').map(s => s.trim()).filter(s => s.length);
+      return { v, label, parts };
+    });
+    const numCols = parsed.reduce((m, x) => Math.max(m, x.parts.length), 0);
+    let html = '';
+    if (numCols <= 1) {
+      // single attribute (or no slash) — simple flat picker
+      html = `<div class="vp-label">Choose option</div><div class="variant-options">` +
+        parsed.map((x, i) => {
+          const vStock = x.v.stock == null ? p.stock : x.v.stock;
           const disabled = vStock <= 0;
-          return `<button type="button" class="variant-option ${disabled?'disabled':''}" onclick="selectVariant(${i})" data-idx="${i}">
-            ${escapeHtml(v.value || v.name || `Option ${i+1}`)}${v.price!=null?` · $${Number(v.price).toFixed(2)}`:''}
-          </button>`;
-        }).join('')}
-      </div>`;
-    selectVariant(0);
+          return `<button type="button" class="variant-option ${disabled?'disabled':''}" onclick="selectVariant(${i})" data-idx="${i}">${escapeHtml(x.label)}${x.v.price!=null?` · ${Number(x.v.price).toFixed(2)}`:''}</button>`;
+        }).join('') + `</div>`;
+      picker.innerHTML = html;
+      selectVariant(0);
+    } else {
+      // grouped attribute pickers (e.g. Color, then Size)
+      const attrNames = ['Color','Size','Material','Style','Option'];
+      const groups = [];
+      for (let c = 0; c < numCols; c++) {
+        const seen = new Set();
+        const opts = [];
+        parsed.forEach((x, vi) => {
+          const val = x.parts[c] || '';
+          if (!seen.has(val)) { seen.add(val); opts.push({ value: val, variantIdx: vi }); }
+        });
+        groups.push({ name: attrNames[c] || `Option ${c+1}`, opts });
+      }
+      variantGroups = groups;
+      variantParsed = parsed;
+      selectedAttrValues = groups.map(() => null);
+      html = groups.map((g, gi) => `
+        <div class="vp-label">${escapeHtml(g.name)}</div>
+        <div class="variant-options" data-group="${gi}">
+          ${g.opts.map(o => `<button type="button" class="variant-option" onclick="selectAttr(${gi}, '${escapeAttr(o.value)}')" data-val="${escapeAttr(o.value)}">${escapeHtml(o.value)}</button>`).join('')}
+        </div>`).join('');
+      picker.innerHTML = html;
+      // auto-select first value of each group
+      groups.forEach((g, gi) => selectAttr(gi, g.opts[0].value));
+    }
   } else {
     picker.style.display = 'none';
     picker.innerHTML = '';
@@ -663,7 +695,7 @@ function selectVariant(idx){
   selectedVariant = v;
   document.querySelectorAll('.variant-option').forEach((el, i) => el.classList.toggle('active', i === idx));
   const price = v.price != null ? Number(v.price) : Number(currentProduct.price);
-  document.getElementById('detailsPrice').textContent = `$${price.toFixed(2)}`;
+  document.getElementById('detailsPrice').textContent = `${price.toFixed(2)}`;
   const stock = v.stock != null ? v.stock : currentProduct.stock;
   document.getElementById('detailsStock').textContent = stock > 0 ? `✓ In stock (${stock} available)` : '✕ Out of stock';
   document.getElementById('detailsStock').style.color = stock > 0 ? 'var(--leaf)' : 'var(--clay)';
@@ -679,6 +711,30 @@ function selectVariant(idx){
     document.getElementById('detailsImagePlaceholder').style.display = 'none';
   }
 }
+
+// Grouped variant selection (e.g. Color + Size)
+let variantGroups = [];
+let variantParsed = [];
+let selectedAttrValues = [];
+function selectAttr(groupIdx, value){
+  if (!currentProduct) return;
+  selectedAttrValues[groupIdx] = value;
+  document.querySelectorAll(`.variant-options[data-group="${groupIdx}"] .variant-option`).forEach(el => {
+    el.classList.toggle('active', el.dataset.val === value);
+  });
+  // find matching variant
+  const target = selectedAttrValues.map(v => v || '').join(' / ');
+  const match = variantParsed.find(x => x.label === target) ||
+    variantParsed.find(x => selectedAttrValues.every((val, i) => x.parts[i] === val));
+  if (match) {
+    selectVariant(variantParsed.indexOf(match));
+  } else {
+    selectedVariant = null;
+    document.getElementById('detailsStock').textContent = 'Combination unavailable';
+    document.getElementById('detailsStock').style.color = 'var(--clay)';
+    document.getElementById('detailsAddBtn').disabled = true;
+  }
+}
 function stepDetailsQty(delta){
   const input = document.getElementById('detailsQuantity');
   input.value = Math.max(1, (parseInt(input.value)||1) + delta);
@@ -690,7 +746,7 @@ function addToCartFromDetails(){
   const qty = Math.max(1, parseInt(document.getElementById('detailsQuantity').value) || 1);
   const unitPrice = selectedVariant && selectedVariant.price != null ? Number(selectedVariant.price) : Number(currentProduct.price);
   const itemImage = selectedVariant?.image || currentProduct.image;
-  const variantLabel = selectedVariant ? (selectedVariant.value || selectedVariant.name) : null;
+  const variantLabel = selectedVariant ? (selectedVariant.label || [selectedVariant.name, selectedVariant.value].filter(Boolean).join(' / ')) : null;
   addQtyToCart({
     id: currentProduct.id,
     name: currentProduct.name,
@@ -815,6 +871,7 @@ async function placeOrder(e){
     document.getElementById('confirmOrderId').textContent = `#${data.orderId}`;
     cart = []; persistCart();
     goToPage('confirmation');
+    window.scrollTo(0, 0);
   } catch (err) {
     console.log('order error', err);
     showToast('Network error placing order', 'error');
