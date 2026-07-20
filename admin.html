@@ -165,7 +165,7 @@
   .banner-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
 
   /* Variants in product modal */
-  .variant-row { display: grid; grid-template-columns: 1fr 1fr 0.7fr 0.7fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+  .variant-row { display: grid; grid-template-columns: 1.4fr 0.7fr 0.7fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
   .variant-row input { padding: 0.55rem 0.7rem; border: 1px solid var(--border); border-radius: 5px; font-size: 0.85rem; }
   .variant-row button { background: var(--error); color: #fff; border: none; border-radius: 5px; padding: 0.5rem 0.7rem; cursor: pointer; font-weight: 700; }
   .add-variant-btn { background: var(--navy); color: #fff; border: none; padding: 0.5rem 0.9rem; border-radius: 5px; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-top: 0.4rem; }
@@ -405,7 +405,7 @@
 
         <div class="form-group">
           <label>Variants (optional)</label>
-          <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:0.6rem;">e.g. Size: 500ml / 1L. Each variant can have its own price adjustment, stock, and image.</p>
+          <p style="font-size:0.82rem; color:var(--text-light); margin-bottom:0.6rem;">Each variant is one combined label, e.g. "Black / S", "Black / M", "White / L". Add one row per combination with its own price, stock, and image.</p>
           <div id="variantsContainer"></div>
           <button type="button" class="add-variant-btn" onclick="addVariantRow()">+ Add variant</button>
         </div>
@@ -666,7 +666,10 @@ function editProduct(id) {
   currentEditingProductId = id;
   pendingProductImage = null;
   retainedProductImage = p.image || null;
-  pendingVariants = (Array.isArray(p.variants) ? p.variants : []).map(v => ({...v}));
+  pendingVariants = (Array.isArray(p.variants) ? p.variants : []).map(v => ({
+    label: v.label || [v.name, v.value].filter(Boolean).join(' / ') || '',
+    price: v.price, stock: v.stock, image: v.image, _pendingFile: null
+  }));
   document.getElementById('productName').value = p.name;
   document.getElementById('productPrice').value = p.price;
   document.getElementById('productStock').value = p.stock;
@@ -704,8 +707,7 @@ function previewProductImage(e) {
 /* variants */
 function addVariantRow(data = {}) {
   pendingVariants.push({
-    name: data.name || '',
-    value: data.value || '',
+    label: data.label || '',
     price: data.price !== undefined ? data.price : '',
     stock: data.stock !== undefined ? data.stock : '',
     image: data.image || null,
@@ -737,8 +739,7 @@ function renderVariantRows() {
   if (pendingVariants.length === 0) { container.innerHTML = '<p style="color:var(--text-light); font-size:0.85rem;">No variants yet.</p>'; return; }
   container.innerHTML = pendingVariants.map((v, i) => `
     <div class="variant-row">
-      <input type="text" placeholder="Option name (e.g. Size)" value="${escapeAttr(v.name||'')}" oninput="setVariantField(${i},'name',this.value)">
-      <input type="text" placeholder="Value (e.g. 500ml)" value="${escapeAttr(v.value||'')}" oninput="setVariantField(${i},'value',this.value)">
+      <input type="text" placeholder="Label e.g. Black / S" value="${escapeAttr(v.label||'')}" oninput="setVariantField(${i},'label',this.value)">
       <input type="number" step="0.01" placeholder="Price" value="${v.price!==''&&v.price!==undefined?v.price:''}" oninput="setVariantField(${i},'price',this.value)">
       <input type="number" placeholder="Stock" value="${v.stock!==''&&v.stock!==undefined?v.stock:''}" oninput="setVariantField(${i},'stock',this.value)">
       <div style="display:flex; gap:0.3rem; align-items:center;">
@@ -776,8 +777,10 @@ async function saveProduct(e) {
     for (const v of pendingVariants) {
       let vImg = v.image;
       if (v._pendingFile) vImg = await uploadImage(v._pendingFile);
+      const label = (v.label || '').trim();
+      if (!label) continue;
       variantsPayload.push({
-        name: v.name, value: v.value,
+        label,
         price: v.price === '' ? null : parseFloat(v.price),
         stock: v.stock === '' ? null : parseInt(v.stock),
         image: vImg
@@ -847,7 +850,12 @@ function renderOrders() {
           </select>
         </td>
         <td>${date}</td>
-        <td><button class="btn-sm btn-view" onclick="viewOrder(${o.id})">View</button></td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn-sm btn-view" onclick="viewOrder(${o.id})">View</button>
+            <button class="btn-sm btn-delete" onclick="deleteOrder(${o.id})">Delete</button>
+          </div>
+        </td>
       </tr>`;
   }).join('');
 }
@@ -875,7 +883,12 @@ function filterOrders() {
           </select>
         </td>
         <td>${date}</td>
-        <td><button class="btn-sm btn-view" onclick="viewOrder(${o.id})">View</button></td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn-sm btn-view" onclick="viewOrder(${o.id})">View</button>
+            <button class="btn-sm btn-delete" onclick="deleteOrder(${o.id})">Delete</button>
+          </div>
+        </td>
       </tr>`;
   }).join('');
 }
@@ -927,6 +940,16 @@ async function viewOrder(id) {
   } catch (error) { showToast(error.message, 'error'); }
 }
 function closeOrderModal() { document.getElementById('orderModal').classList.remove('active'); }
+
+async function deleteOrder(id) {
+  if (!confirm(`Delete order #${id}? This cannot be undone.`)) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/orders/${id}`, { method:'DELETE', headers:{'Authorization':`Bearer ${currentToken}`} });
+    if (!res.ok) { const e = await res.json().catch(()=>({})); showToast(e.error||'Failed to delete order', 'error'); return; }
+    showToast(`Order #${id} deleted`, 'success');
+    loadOrders(); loadDashboardStats();
+  } catch (error) { showToast(error.message, 'error'); }
+}
 
 /* ---------- CATEGORIES ---------- */
 async function loadCategories() {
