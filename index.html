@@ -60,11 +60,11 @@
   .carousel-section{background:var(--card); padding:1.4rem 0 0;}
   .carousel-container{max-width:1240px; margin:0 auto; padding:0 1.5rem;}
   .carousel{position:relative; height:380px; border-radius:16px; overflow:hidden; background:linear-gradient(135deg,var(--ink) 0%, #22335c 100%);}
-  .carousel-slide{position:absolute; inset:0; opacity:0; transition:opacity .6s ease; display:flex; align-items:center; justify-content:center;}
-  .carousel-slide.active{opacity:1; z-index:2;}
+  .carousel-track{position:absolute; inset:0; display:flex; transition:transform .7s cubic-bezier(.65,.05,.36,1);}
+  .carousel-slide{position:relative; flex:0 0 100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden;}
   .carousel-slide img{width:100%; height:100%; object-fit:cover;}
   .carousel-slide .overlay{position:absolute; inset:0; background:linear-gradient(90deg, rgba(20,33,61,.78) 0%, rgba(20,33,61,.45) 45%, rgba(20,33,61,.15) 100%);}
-  .slide-content{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:0 4rem; color:#fff; max-width:640px;}
+  .slide-content{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; padding:0 4rem; color:#fff; max-width:640px; animation:fadeUp .8s ease both;}
   .slide-content .eyebrow{font-family:'JetBrains Mono',monospace; letter-spacing:.15em; text-transform:uppercase; font-size:.78rem; color:var(--citrus); margin-bottom:.8rem;}
   .slide-content h1{font-size:clamp(1.6rem, 3.5vw, 2.6rem); font-weight:600; line-height:1.15; margin-bottom:.8rem;}
   .slide-content p{font-size:1.02rem; color:rgba(255,255,255,.85); max-width:480px;}
@@ -72,12 +72,13 @@
   .slide-default .eyebrow{font-family:'JetBrains Mono',monospace; letter-spacing:.15em; text-transform:uppercase; font-size:.78rem; color:var(--citrus);}
   .slide-default h1{font-size:clamp(1.8rem,4vw,3rem); font-weight:600;}
   .slide-default p{font-size:1.05rem; color:rgba(255,255,255,.78); max-width:520px;}
-  .carousel-nav{position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.15); backdrop-filter:blur(4px); color:#fff; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:1.1rem; z-index:5;}
-  .carousel-nav:hover{background:rgba(255,255,255,.28);}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+  .carousel-nav{position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.15); backdrop-filter:blur(4px); color:#fff; border:none; width:42px; height:42px; border-radius:50%; cursor:pointer; font-size:1.1rem; z-index:5; transition:background .2s, transform .2s;}
+  .carousel-nav:hover{background:rgba(255,255,255,.32); transform:translateY(-50%) scale(1.08);}
   .carousel-nav.prev{left:1rem;} .carousel-nav.next{right:1rem;}
   .carousel-dots{position:absolute; bottom:1.1rem; left:50%; transform:translateX(-50%); display:flex; gap:.5rem; z-index:5;}
-  .carousel-dot{width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.4); cursor:pointer; border:none; padding:0;}
-  .carousel-dot.active{background:#fff; width:22px; border-radius:5px; transition:width .2s;}
+  .carousel-dot{width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.4); cursor:pointer; border:none; padding:0; transition:all .25s;}
+  .carousel-dot.active{background:#fff; width:24px; border-radius:5px;}
 
   .section{max-width:1240px; margin:0 auto; padding:2.6rem 1.5rem;}
   .section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:1.3rem;}
@@ -87,9 +88,10 @@
 
   .cat-scroll{display:flex; gap:.7rem; overflow-x:auto; padding-bottom:.3rem;}
   .cat-chip{flex-shrink:0; display:flex; align-items:center; gap:.5rem; padding:.6rem 1rem; border-radius:99px; border:1.5px solid var(--line); background:#fff; cursor:pointer; font-size:.88rem; font-weight:600; white-space:nowrap; transition:all .15s;}
-  .cat-chip:hover{border-color:var(--ink);}
+  .cat-chip:hover{border-color:var(--ink); transform:translateY(-1px);}
   .cat-chip.active{background:var(--ink); border-color:var(--ink); color:#fff;}
   .cat-chip .icon{font-size:1.1rem;}
+  .cat-chip img.icon{width:22px; height:22px; border-radius:5px; object-fit:cover;}
 
   .products-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.4rem;}
   .product-card{background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; transition:transform .18s, box-shadow .18s, border-color .18s;}
@@ -178,7 +180,7 @@
   .form-group{display:flex; flex-direction:column; gap:.4rem;}
   .form-group label{font-size:.82rem; font-weight:700; color:var(--ink-soft);}
   .form-group input, .form-group select{padding:.75rem .8rem; border:1.5px solid var(--line-strong); border-radius:8px; font-size:.92rem; font-family:inherit;}
-  .form-group input:focus{outline:none; border-color:var(--ink);}
+  .form-group input:focus, .form-group select:focus{outline:none; border-color:var(--ink);}
   .place-order-btn{width:100%; padding:1.05rem; background:var(--ink); color:#fff; border:none; border-radius:10px; font-weight:700; font-size:1.02rem; cursor:pointer;}
   .place-order-btn:hover{background:#0d1730;}
   .checkout-item-row{display:flex; justify-content:space-between; font-size:.86rem; margin-bottom:.55rem; font-family:'JetBrains Mono',monospace;}
@@ -198,6 +200,20 @@
   .timeline-label{font-size:.76rem; font-weight:700; color:var(--ink-soft);}
   .timeline-step.done .timeline-label, .timeline-step.current .timeline-label{color:var(--ink);}
   .track-result{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:2rem; text-align:left; margin-top:1.5rem;}
+
+  /* Info / content pages */
+  .info-wrap{max-width:760px; margin:0 auto; padding:2rem 1.5rem 3rem;}
+  .info-card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:2.4rem;}
+  .info-card h2{font-size:1.8rem; margin-bottom:1rem; padding-bottom:.6rem; border-bottom:2px solid var(--citrus);}
+  .info-card .info-body{color:var(--ink-soft); line-height:1.8; font-size:.96rem; white-space:pre-wrap;}
+  .faq-item{border-bottom:1px solid var(--line); padding:1rem 0;}
+  .faq-item:last-child{border-bottom:none;}
+  .faq-q{font-weight:700; color:var(--ink); margin-bottom:.4rem; font-family:'Fraunces',serif; font-size:1.05rem;}
+  .faq-a{color:var(--ink-soft); line-height:1.7; font-size:.92rem;}
+  .info-tabs{display:flex; gap:.5rem; margin-bottom:1.4rem; flex-wrap:wrap;}
+  .info-tab{padding:.6rem 1.1rem; border:1.5px solid var(--line); border-radius:99px; background:#fff; cursor:pointer; font-weight:600; font-size:.88rem; color:var(--ink-soft); transition:all .15s;}
+  .info-tab:hover{border-color:var(--ink); color:var(--ink);}
+  .info-tab.active{background:var(--ink); border-color:var(--ink); color:#fff;}
 
   footer{background:var(--ink); color:#fff; margin-top:3rem;}
   .footer-inner{max-width:1240px; margin:0 auto; padding:3rem 1.5rem 2rem; display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:2.4rem;}
@@ -238,7 +254,7 @@
     <div class="brand" onclick="goToPage('home')">
       <img id="storeLogo" alt="Zupermart" src="" style="display:none;">
       <div class="brand-mark" id="brandMark">Z</div>
-      <span class="brand-name">ZUPER<span>MART</span></span>
+      <span class="brand-name" id="brandName">ZUPER<span>MART</span></span>
     </div>
     <div class="search-wrap">
       <div class="search-row">
@@ -275,10 +291,12 @@
   <div class="carousel-section">
     <div class="carousel-container">
       <div class="carousel" id="carousel">
-        <div class="carousel-slide active slide-default">
-          <span class="eyebrow">Fresh · Fast · Fair prices</span>
-          <h1>Everything for your table,<br>delivered to your door.</h1>
-          <p>Groceries, pantry staples and everyday essentials — hand-picked and ready in a click.</p>
+        <div class="carousel-track" id="carouselTrack">
+          <div class="carousel-slide slide-default">
+            <span class="eyebrow">Fresh · Fast · Fair prices</span>
+            <h1>Everything for your table,<br>delivered to your door.</h1>
+            <p>Groceries, pantry staples and everyday essentials — hand-picked and ready in a click.</p>
+          </div>
         </div>
       </div>
       <button class="carousel-nav prev" onclick="prevSlide()">❮</button>
@@ -353,9 +371,11 @@
           <div class="form-row full"><div class="form-group"><label>Phone</label><input type="tel" id="phone" placeholder="Required" required></div></div>
           <div class="form-row full"><div class="form-group"><label>Address</label><input type="text" id="address" required></div></div>
           <div class="form-row">
-            <div class="form-group"><label>City</label><input type="text" id="city" required></div>
+            <div class="form-group"><label>City</label><input type="text" id="city" list="cityList" required></div>
             <div class="form-group"><label>Postal code</label><input type="text" id="postalCode" required></div>
           </div>
+          <datalist id="cityList"></datalist>
+          <div class="form-row full"><div class="form-group"><label>Delivery charge</label><input type="text" id="deliveryChargeDisplay" value="$5.00" readonly style="background:var(--paper);"></div></div>
         </div>
         <div class="form-section">
           <h2>Payment method</h2>
@@ -372,7 +392,7 @@
           <div id="checkoutItems"></div>
           <div class="barcode"></div>
           <div class="summary-row"><span>Subtotal</span><span id="checkoutSubtotal">$0.00</span></div>
-          <div class="summary-row"><span>Shipping</span><span>$5.00</span></div>
+          <div class="summary-row"><span>Shipping</span><span id="checkoutShipping">$5.00</span></div>
           <div class="summary-row total"><span>Total</span><span id="checkoutTotal">$5.00</span></div>
         </div>
       </div>
@@ -408,14 +428,29 @@
   </div>
 </div>
 
+<!-- INFO (shipping / returns / faq) -->
+<div id="infoPage" class="page">
+  <div class="info-wrap">
+    <div class="info-tabs">
+      <div class="info-tab active" data-tab="shipping" onclick="showInfoTab('shipping')">Shipping</div>
+      <div class="info-tab" data-tab="returns" onclick="showInfoTab('returns')">Returns</div>
+      <div class="info-tab" data-tab="faqs" onclick="showInfoTab('faqs')">FAQ</div>
+    </div>
+    <div class="info-card" id="infoCard"></div>
+  </div>
+</div>
+
 <footer>
   <div class="footer-inner">
-    <div><h3>Zupermart</h3><p>Your trusted online marketplace for quality groceries and everyday essentials, delivered fresh with care.</p></div>
+    <div>
+      <h3 id="footerBrand">Zupermart</h3>
+      <p id="footerTagline">Your trusted online marketplace for quality groceries and everyday essentials, delivered fresh with care.</p>
+    </div>
     <div><h3>Quick links</h3><ul><li><a onclick="goToPage('home')">Home</a></li><li><a onclick="goToPage('track')">Track order</a></li><li><a onclick="goToPage('cart')">Your cart</a></li></ul></div>
-    <div><h3>Customer service</h3><ul><li><a href="#">Shipping info</a></li><li><a href="#">Returns</a></li><li><a href="#">FAQ</a></li></ul></div>
-    <div><h3>Contact</h3><p>support@zupermart.com<br>1-800-ZUPERMART<br>9AM – 9PM EST</p></div>
+    <div><h3>Customer service</h3><ul><li><a onclick="goToInfo('shipping')">Shipping info</a></li><li><a onclick="goToInfo('returns')">Returns</a></li><li><a onclick="goToInfo('faqs')">FAQ</a></li></ul></div>
+    <div><h3>Contact</h3><p id="footerContact">support@zupermart.com<br>1-800-ZUPERMART<br>9AM – 9PM EST</p></div>
   </div>
-  <div class="footer-bottom">© 2026 Zupermart. All rights reserved.</div>
+  <div class="footer-bottom" id="footerBottom">© 2026 Zupermart. All rights reserved.</div>
 </footer>
 
 <script>
@@ -423,15 +458,22 @@ const API_BASE = 'https://zupermart-api.amworkmanage.workers.dev';
 let allProducts = [];
 let allCategories = [];
 let banners = [];
+let storeSettings = { storeName:'Zupermart', storeEmail:'support@zupermart.com', storePhone:'+1 (555) 123-4567', hideDefaultBanner:false };
+let siteContent = { shipping:'', returns:'', faqs:'' };
+let deliveryCharges = [];
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 let currentProduct = null;
 let currentSlide = 0;
 let slideTimer = null;
 let lastOrderId = null;
 let selectedVariant = null;
+let currentShipping = 5;
 const state = { category:'' };
 
 window.addEventListener('load', () => {
+  loadSettings();
+  loadContent();
+  loadDeliveryCharges();
   loadLogo();
   loadBanners();
   loadCategories();
@@ -439,10 +481,119 @@ window.addEventListener('load', () => {
   updateCartCount();
 });
 
+/* ---------- Robust fetch with retry ---------- */
+async function apiFetch(path, options = {}, retries = 2) {
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE}${path}`, options);
+      return res;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+      }
+    }
+  }
+  throw lastErr;
+}
+
+/* ---------- SETTINGS ---------- */
+async function loadSettings(){
+  try {
+    const res = await apiFetch('/api/settings');
+    if (res.ok) {
+      storeSettings = await res.json();
+      applySettings();
+    }
+  } catch (e) { console.log('settings error', e); }
+}
+function applySettings(){
+  const name = storeSettings.storeName || 'Zupermart';
+  const upper = name.toUpperCase();
+  // brand name: highlight last 4 letters if long enough, else whole
+  const cut = upper.length > 4 ? upper.length - 4 : 0;
+  document.getElementById('brandName').innerHTML = `${escapeHtml(upper.slice(0,cut))}<span>${escapeHtml(upper.slice(cut))}</span>`;
+  document.getElementById('footerBrand').textContent = name;
+  document.getElementById('footerBottom').textContent = `© ${new Date().getFullYear()} ${name}. All rights reserved.`;
+  const contact = `${escapeHtml(storeSettings.storeEmail || '')}<br>${escapeHtml(storeSettings.storePhone || '')}<br>${escapeHtml(storeSettings.storeAddress || '')}`;
+  document.getElementById('footerContact').innerHTML = contact;
+  document.title = `${name} — Groceries & Everyday Essentials`;
+  // re-render carousel in case hideDefaultBanner changed
+  renderCarousel();
+}
+
+/* ---------- CONTENT ---------- */
+async function loadContent(){
+  try {
+    const res = await apiFetch('/api/content');
+    if (res.ok) siteContent = await res.json();
+  } catch (e) { console.log('content error', e); }
+}
+function showInfoTab(tab){
+  document.querySelectorAll('.info-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  const card = document.getElementById('infoCard');
+  const body = siteContent[tab] || '';
+  if (tab === 'faqs') {
+    const faqs = parseFaqs(body);
+    const title = 'Frequently asked questions';
+    if (!faqs.length) {
+      card.innerHTML = `<h2>${title}</h2><div class="info-body">No FAQs published yet.</div>`;
+    } else {
+      card.innerHTML = `<h2>${title}</h2>` + faqs.map(f => `<div class="faq-item"><div class="faq-q">${escapeHtml(f.q)}</div><div class="faq-a">${escapeHtml(f.a)}</div></div>`).join('');
+    }
+  } else {
+    const titles = { shipping:'Shipping information', returns:'Returns & refunds' };
+    card.innerHTML = `<h2>${titles[tab]}</h2><div class="info-body">${escapeHtml(body) || 'Information coming soon.'}</div>`;
+  }
+}
+function parseFaqs(text){
+  if (!text) return [];
+  // Accept Q: ... A: ... pairs separated by blank lines, or "Q - A" per line
+  const blocks = text.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+  const faqs = [];
+  for (const b of blocks) {
+    const m = b.match(/^(?:Q[:\-]\s*)?(.+?)\s*\n\s*(?:A[:\-]\s*)?(.+)$/s);
+    if (m) faqs.push({ q: m[1].trim(), a: m[2].trim() });
+  }
+  return faqs;
+}
+function goToInfo(tab){
+  goToPage('info');
+  showInfoTab(tab);
+}
+
+/* ---------- DELIVERY CHARGES ---------- */
+async function loadDeliveryCharges(){
+  try {
+    const res = await apiFetch('/api/delivery-charges');
+    if (res.ok) deliveryCharges = await res.json();
+  } catch (e) { console.log('delivery error', e); }
+  populateCityList();
+}
+function populateCityList(){
+  const dl = document.getElementById('cityList');
+  if (!dl) return;
+  dl.innerHTML = deliveryCharges.map(c => `<option value="${escapeAttr(c.city)}">`).join('');
+}
+function getShippingForCity(city){
+  if (!city) return 5;
+  const match = deliveryCharges.find(c => c.city.toLowerCase() === city.toLowerCase());
+  return match ? parseFloat(match.charge) : 5;
+}
+function recalcShipping(){
+  const city = document.getElementById('city').value.trim();
+  currentShipping = getShippingForCity(city);
+  document.getElementById('deliveryChargeDisplay').value = `$${currentShipping.toFixed(2)}`;
+  document.getElementById('checkoutShipping').textContent = `$${currentShipping.toFixed(2)}`;
+  const subtotal = cart.reduce((s,i)=>s+i.price*i.quantity, 0);
+  document.getElementById('checkoutTotal').textContent = `$${(subtotal + currentShipping).toFixed(2)}`;
+}
+
 /* ---------- LOGO ---------- */
 async function loadLogo(){
   try {
-    const res = await fetch(`${API_BASE}/api/media/logo`);
+    const res = await apiFetch('/api/media/logo');
     if (res.ok) {
       const data = await res.json();
       if (data.url) {
@@ -458,18 +609,23 @@ async function loadLogo(){
 /* ---------- CAROUSEL ---------- */
 async function loadBanners(){
   try {
-    const res = await fetch(`${API_BASE}/api/media/banners`);
+    const res = await apiFetch('/api/media/banners');
     if (res.ok) { banners = await res.json(); renderCarousel(); }
   } catch (e) { console.log('banners error', e); }
 }
 function renderCarousel(){
-  const carousel = document.getElementById('carousel');
+  const track = document.getElementById('carouselTrack');
   const dotsEl = document.getElementById('carouselDots');
-  let slidesHtml = `<div class="carousel-slide active slide-default">
+  const showDefault = !(storeSettings.hideDefaultBanner && banners.length > 0);
+
+  let slidesHtml = '';
+  if (showDefault) {
+    slidesHtml += `<div class="carousel-slide slide-default">
       <span class="eyebrow">Fresh · Fast · Fair prices</span>
       <h1>Everything for your table,<br>delivered to your door.</h1>
       <p>Groceries, pantry staples and everyday essentials — hand-picked and ready in a click.</p>
     </div>`;
+  }
   banners.forEach(b => {
     slidesHtml += `
       <div class="carousel-slide">
@@ -482,30 +638,41 @@ function renderCarousel(){
         </div>
       </div>`;
   });
-  carousel.innerHTML = slidesHtml;
-  let dots = '<button class="carousel-dot active" onclick="goToSlide(0)" aria-label="Slide 1"></button>';
-  banners.forEach((_, i) => dots += `<button class="carousel-dot" onclick="goToSlide(${i+1})" aria-label="Slide ${i+2}"></button>`);
+  if (!slidesHtml) {
+    slidesHtml = `<div class="carousel-slide slide-default"><h1>Welcome to ${escapeHtml(storeSettings.storeName || 'Zupermart')}</h1></div>`;
+  }
+  track.innerHTML = slidesHtml;
+
+  const totalSlides = track.children.length;
+  let dots = '';
+  for (let i = 0; i < totalSlides; i++) {
+    dots += `<button class="carousel-dot ${i===0?'active':''}" onclick="goToSlide(${i})" aria-label="Slide ${i+1}"></button>`;
+  }
   dotsEl.innerHTML = dots;
   currentSlide = 0;
   updateCarousel();
   if (slideTimer) clearInterval(slideTimer);
-  if (banners.length > 0) slideTimer = setInterval(() => { nextSlide(); }, 5000);
+  if (totalSlides > 1) slideTimer = setInterval(() => { nextSlide(); }, 5500);
 }
 function updateCarousel(){
-  const slides = document.querySelectorAll('.carousel-slide');
+  const track = document.getElementById('carouselTrack');
+  const slides = track.children;
   const dots = document.querySelectorAll('.carousel-dot');
-  slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+  const total = slides.length;
+  if (!total) return;
+  currentSlide = (currentSlide + total) % total;
+  track.style.transform = `translateX(-${currentSlide * 100}%)`;
   dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
 }
-function prevSlide(){ currentSlide = (currentSlide - 1 + (banners.length + 1)) % (banners.length + 1); updateCarousel(); resetTimer(); }
-function nextSlide(){ currentSlide = (currentSlide + 1) % (banners.length + 1); updateCarousel(); resetTimer(); }
+function prevSlide(){ currentSlide--; updateCarousel(); resetTimer(); }
+function nextSlide(){ currentSlide++; updateCarousel(); resetTimer(); }
 function goToSlide(i){ currentSlide = i; updateCarousel(); resetTimer(); }
-function resetTimer(){ if (slideTimer) { clearInterval(slideTimer); slideTimer = setInterval(() => nextSlide(), 5000); } }
+function resetTimer(){ if (slideTimer) { clearInterval(slideTimer); slideTimer = setInterval(() => nextSlide(), 5500); } }
 
 /* ---------- CATEGORIES ---------- */
 async function loadCategories(){
   try {
-    const res = await fetch(`${API_BASE}/api/categories`);
+    const res = await apiFetch('/api/categories');
     if (res.ok) { allCategories = await res.json(); renderCategories(); populateCategoryFilter(); }
   } catch (e) { console.log('categories error', e); }
 }
@@ -513,7 +680,12 @@ function renderCategories(){
   const grid = document.getElementById('categoriesGrid');
   if (!allCategories.length) { grid.innerHTML = '<div class="empty-state">No categories yet</div>'; return; }
   let html = `<div class="cat-chip ${state.category===''?'active':''}" onclick="selectCategory('')"><span class="icon">✦</span>All</div>`;
-  html += allCategories.map(c => `<div class="cat-chip ${state.category===c.name?'active':''}" onclick="selectCategory('${escapeAttr(c.name)}')"><span class="icon">${c.icon||'📦'}</span>${escapeHtml(c.name)}</div>`).join('');
+  html += allCategories.map(c => {
+    const iconHtml = c.imageUrl
+      ? `<img class="icon" src="${escapeAttr(c.imageUrl)}" alt="${escapeAttr(c.name)}">`
+      : `<span class="icon">${c.icon||'📦'}</span>`;
+    return `<div class="cat-chip ${state.category===c.name?'active':''}" onclick="selectCategory('${escapeAttr(c.name)}')">${iconHtml}${escapeHtml(c.name)}</div>`;
+  }).join('');
   grid.innerHTML = html;
 }
 function populateCategoryFilter(){
@@ -576,7 +748,7 @@ function applyFilters(){
 /* ---------- PRODUCTS ---------- */
 async function loadProducts(){
   try {
-    const res = await fetch(`${API_BASE}/api/products`);
+    const res = await apiFetch('/api/products');
     if (res.ok) { allProducts = await res.json(); renderProducts(allProducts); }
     else { allProducts = []; renderProducts([]); }
   } catch (e) { console.log('products error', e); allProducts=[]; renderProducts([]); }
@@ -632,12 +804,10 @@ function viewProductDetails(id){
   if (p.image) { img.src = p.image; img.style.display='block'; ph.style.display='none'; }
   else { img.style.display='none'; ph.style.display='block'; }
 
-  // variant picker — group variants by attribute columns split on '/'
   const variants = Array.isArray(p.variants) ? p.variants : [];
   const picker = document.getElementById('variantPicker');
   if (variants.length > 0) {
     picker.style.display = 'block';
-    // Split each variant label into parts, e.g. "Black / S" -> ["Black", "S"]
     const parsed = variants.map(v => {
       const label = (v.label || [v.name, v.value].filter(Boolean).join(' / ') || '').trim();
       const parts = label.split('/').map(s => s.trim()).filter(s => s.length);
@@ -646,7 +816,6 @@ function viewProductDetails(id){
     const numCols = parsed.reduce((m, x) => Math.max(m, x.parts.length), 0);
     let html = '';
     if (numCols <= 1) {
-      // single attribute (or no slash) — simple flat picker
       html = `<div class="vp-label">Choose option</div><div class="variant-options">` +
         parsed.map((x, i) => {
           const vStock = x.v.stock == null ? p.stock : x.v.stock;
@@ -656,7 +825,6 @@ function viewProductDetails(id){
       picker.innerHTML = html;
       selectVariant(0);
     } else {
-      // grouped attribute pickers (e.g. Color, then Size)
       const attrNames = ['Color','Size','Material','Style','Option'];
       const groups = [];
       for (let c = 0; c < numCols; c++) {
@@ -677,7 +845,6 @@ function viewProductDetails(id){
           ${g.opts.map(o => `<button type="button" class="variant-option" onclick="selectAttr(${gi}, '${escapeAttr(o.value)}')" data-val="${escapeAttr(o.value)}">${escapeHtml(o.value)}</button>`).join('')}
         </div>`).join('');
       picker.innerHTML = html;
-      // auto-select first value of each group
       groups.forEach((g, gi) => selectAttr(gi, g.opts[0].value));
     }
   } else {
@@ -712,7 +879,6 @@ function selectVariant(idx){
   }
 }
 
-// Grouped variant selection (e.g. Color + Size)
 let variantGroups = [];
 let variantParsed = [];
 let selectedAttrValues = [];
@@ -722,7 +888,6 @@ function selectAttr(groupIdx, value){
   document.querySelectorAll(`.variant-options[data-group="${groupIdx}"] .variant-option`).forEach(el => {
     el.classList.toggle('active', el.dataset.val === value);
   });
-  // find matching variant
   const target = selectedAttrValues.map(v => v || '').join(' / ');
   const match = variantParsed.find(x => x.label === target) ||
     variantParsed.find(x => selectedAttrValues.every((val, i) => x.parts[i] === val));
@@ -764,7 +929,7 @@ function addToCart(e, id){
   const p = allProducts.find(x => x.id === id);
   if (!p || p.stock <= 0) return;
   const variants = Array.isArray(p.variants) ? p.variants : [];
-  if (variants.length > 0) { viewProductDetails(id); return; } // force variant selection
+  if (variants.length > 0) { viewProductDetails(id); return; }
   addQtyToCart({ id: p.id, name: p.name, price: Number(p.price), image: p.image, variant: null }, 1);
   showToast('Added to cart', 'success');
 }
@@ -842,13 +1007,15 @@ function updateCheckoutSummary(){
   });
   document.getElementById('checkoutItems').innerHTML = itemsHtml || '<p style="color:var(--ink-soft); font-size:.85rem;">Your cart is empty.</p>';
   document.getElementById('checkoutSubtotal').textContent = `$${subtotal.toFixed(2)}`;
-  document.getElementById('checkoutTotal').textContent = `$${(subtotal+5).toFixed(2)}`;
+  document.getElementById('checkoutShipping').textContent = `$${currentShipping.toFixed(2)}`;
+  document.getElementById('checkoutTotal').textContent = `$${(subtotal+currentShipping).toFixed(2)}`;
 }
 async function placeOrder(e){
   e.preventDefault();
   if (!cart.length) { showToast('Your cart is empty', 'error'); return; }
   const btn = document.getElementById('placeOrderBtn');
   btn.disabled = true; btn.textContent = 'Placing order…';
+  const subtotal = cart.reduce((s,i)=>s+i.price*i.quantity, 0);
   const orderData = {
     customer: {
       firstName: document.getElementById('firstName').value,
@@ -858,10 +1025,11 @@ async function placeOrder(e){
       address: `${document.getElementById('address').value}, ${document.getElementById('city').value} ${document.getElementById('postalCode').value}`
     },
     items: cart.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, variant: i.variant })),
-    total: cart.reduce((s,i)=>s+i.price*i.quantity, 0) + 5
+    total: subtotal + currentShipping,
+    shippingCharge: currentShipping
   };
   try {
-    const res = await fetch(`${API_BASE}/api/orders`, {
+    const res = await apiFetch('/api/orders', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData)
     });
@@ -891,7 +1059,7 @@ async function trackOrder(){
   if (!id) { showToast('Enter an order number', 'error'); return; }
   resultEl.innerHTML = '<div class="loading">Looking up your order…</div>';
   try {
-    const res = await fetch(`${API_BASE}/api/track/${encodeURIComponent(id)}`);
+    const res = await apiFetch(`/api/track/${encodeURIComponent(id)}`);
     if (!res.ok) { resultEl.innerHTML = `<div class="empty-state">We couldn't find an order with that number.</div>`; return; }
     const order = await res.json();
     const steps = (order.timeline||[]).map(s => `
@@ -919,10 +1087,10 @@ async function trackOrder(){
 /* ---------- NAV ---------- */
 function goToPage(name){
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const map = { home:'homePage', productDetails:'productDetailsPage', cart:'cartPage', checkout:'checkoutPage', confirmation:'confirmationPage', track:'trackPage' };
+  const map = { home:'homePage', productDetails:'productDetailsPage', cart:'cartPage', checkout:'checkoutPage', confirmation:'confirmationPage', track:'trackPage', info:'infoPage' };
   document.getElementById(map[name]).classList.add('active');
   if (name === 'cart') renderCart();
-  if (name === 'checkout') updateCheckoutSummary();
+  if (name === 'checkout') { currentShipping = 5; recalcShipping(); updateCheckoutSummary(); }
   window.scrollTo(0, 0);
 }
 
@@ -935,6 +1103,12 @@ function showToast(message, type='info'){
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
+
+/* wire up city change listener */
+document.addEventListener('DOMContentLoaded', () => {
+  const cityInput = document.getElementById('city');
+  if (cityInput) cityInput.addEventListener('input', recalcShipping);
+});
 </script>
 </body>
 </html>
