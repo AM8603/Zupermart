@@ -413,7 +413,7 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn-secondary" onclick="closeProductModal()">Cancel</button>
-      <button type="submit" form="productForm" class="btn-primary">Save Product</button>
+      <button type="submit" form="productForm" class="btn-primary" id="saveProductBtn">Save Product</button>
     </div>
   </div>
 </div>
@@ -763,7 +763,9 @@ async function uploadImage(file) {
 
 async function saveProduct(e) {
   e.preventDefault();
-  const btn = e.target.querySelector('button[type="submit"]');
+  const btn = document.getElementById('saveProductBtn');
+  if (!btn) return;
+  const originalText = btn.textContent;
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
     let imageUrl = retainedProductImage;
@@ -805,7 +807,7 @@ async function saveProduct(e) {
   } catch (error) {
     showToast('Error: ' + error.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = 'Save Product';
+    btn.disabled = false; btn.textContent = originalText;
   }
 }
 
